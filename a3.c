@@ -29,28 +29,29 @@ TreeNode *createNode(char *firstName, char *lastName) {
     return newNode;
 }
 
-void add(TreeNode *root, char *firstName, char *lastName) {
+TreeNode *add(TreeNode *root, char *firstName, char *lastName) {
     if (root == NULL) {
-        root = createNode(firstName, lastName);
+        return createNode(firstName, lastName);
     } else if (strcmp(root->firstName, firstName) < 0) {
-        add(root->right, firstName, lastName);
+        root->right = add(root->right, firstName, lastName);
     } else if (strcmp(root->firstName, firstName) > 0) {
-        add(root->left, firstName, lastName);
+        root->left = add(root->left, firstName, lastName);
     } else if (strcmp(root->firstName, firstName) == 0) { //first names are equal, check last names
         if (strcmp(root->lastName, lastName) < 0) {
-            add(root->right, firstName, lastName);
+            root->right = add(root->right, firstName, lastName);
         } else if (strcmp(root->lastName, lastName) > 0) {
-            add(root->left, firstName, lastName);
+            root->left = add(root->left, firstName, lastName);
         } else if (strcmp(root->lastName, lastName) == 0) { //Duplicate node
-            if (root->dupFlag == 0) {
+            if (root->dupFlag == 0 || root->dupFlag == -1) {
                 root->dupFlag = 1;
-                add(root->left, firstName, lastName);
+                root->left = add(root->left, firstName, lastName);
             } else {
-                root->dupFlag = 0;
-                add(root->right, firstName, lastName);
+                root->dupFlag = -1;
+                root->right = add(root->right, firstName, lastName);
             }
         }
     }
+    return root;
 }
 
 TreeNode *delete(TreeNode *node, char *firstName, char *lastName) {
