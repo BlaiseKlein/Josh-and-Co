@@ -8,13 +8,38 @@ typedef struct TreeNode {
     struct TreeNode *right;
     char *firstName;
     char *lastName;
-    int dupFlag; //0 = left, 1 = right.
+    int count; //set to one. increment for each duplicate.
 } TreeNode;
 
 
 void errorMsg(FILE *output){
     fprintf(output, "Error");
     exit(1);
+}
+//free function for node.
+void freeNode(TreeNode *node) {
+    free(node->firstName);
+    free(node->lastName);
+    free(node);
+}
+//free function for tree.
+void freeTree(TreeNode *root) {
+    if (root == NULL) {
+        return;
+    }
+    freeTree(root->right);
+    freeTree(root->left);
+    freeNode(root);
+}
+
+void traverse(TreeNode *root) {
+    if (root != NULL) {
+        traverse(root->left);
+        for (int i = 0; i < root->count; i++) {
+            printf("%s %s\n", root->firstName, root->lastName);
+        }
+        traverse(root->right);
+    }
 }
 
 TreeNode *createNode(char *firstName, char *lastName) {
@@ -24,7 +49,7 @@ TreeNode *createNode(char *firstName, char *lastName) {
         newNode->right = NULL;
         newNode->firstName = strdup(firstName);
         newNode->lastName = strdup(lastName);
-        newNode->dupFlag = 0;
+        newNode->count = 1;
     }
     return newNode;
 }
@@ -42,41 +67,68 @@ TreeNode *add(TreeNode *root, char *firstName, char *lastName) {
         } else if (strcmp(root->lastName, lastName) > 0) {
             root->left = add(root->left, firstName, lastName);
         } else if (strcmp(root->lastName, lastName) == 0) { //Duplicate node
-            if (root->dupFlag == 0 || root->dupFlag == -1) {
-                root->dupFlag = 1;
-                root->left = add(root->left, firstName, lastName);
+            root->count += 1;
+        }
+    }
+    return root;
+}
+
+TreeNode *findMax(TreeNode *root) {
+    if (root->right != NULL) {
+        findMax(root->right);
+    }
+    return root;
+}
+
+TreeNode* delete(TreeNode *root, char *firstName, char *lastName) {
+
+    if (root == NULL) {
+        // Base case: Node not found, add a new node instead.
+        return createNode(firstName, lastName);
+    }
+    if (strcmp(root->firstName, firstName) < 0) {
+        root->right = delete(root->right, firstName, lastName);
+    } else if (strcmp(root->firstName, firstName) > 0) {
+        root->left = delete(root->left, firstName, lastName);
+    } else if (strcmp(root->firstName, firstName) == 0) {//first names are equal.
+        if (strcmp(root->lastName, lastName) < 0) {
+            root->right = delete(root->right, firstName, lastName);
+        } else if (strcmp(root->lastName, lastName) > 0) {
+            root->left = delete(root->left, firstName, lastName);
+        } else {
+            //found node to delete.
+            if (root->count > 1) {//if node has duplicates, reduce number by one.
+                root->count -= 1;
+                return root;
             } else {
-                root->dupFlag = -1;
-                root->right = add(root->right, firstName, lastName);
+                //distinct node needs to be deleted.
+                if (root->left == NULL) {
+                    TreeNode *temp = root->right;
+                    freeNode(root);
+                    return temp;
+                } else if (root->right == NULL) {
+                    TreeNode *temp = root->left;
+                    freeNode(root);
+                    return temp;
+                } else {
+                    //copy values of max node, then call delete for temp node.
+                    TreeNode *temp = findMax(root->left);
+                    root->firstName = temp->firstName;
+                    root->lastName = temp->lastName;
+                    root->count = temp->count;
+                    root->left = delete(root->left, temp->firstName, temp->lastName);
+                }
             }
         }
     }
     return root;
 }
 
-TreeNode *delete(TreeNode *node, char *firstName, char *lastName) {
-
-}
-
-
-
-
-void freeTree(TreeNode *node) {
-    if (node == NULL) {
-        return;
-    }
-    freeTree(node->right);
-    freeTree(node->left);
-    free(node->firstName);
-    free(node->lastName);
-    free(node);
-}
-
 void callFunctions(FILE * fp, int *functions, int lineCount, FILE * output){ //for now we are not using output
     char *buffer = NULL;
     size_t len = 0;
     ssize_t read;
-
+    TreeNode *root = NULL;
 
     for (int i = 0; (i < lineCount); i++) {
         read = getline(&buffer, &len, fp);
@@ -95,25 +147,25 @@ void callFunctions(FILE * fp, int *functions, int lineCount, FILE * output){ //f
         switch(currFunc){
             case 1:
                 printf("call function add, names = %s %s\n", first, last);
+                root = add(root, first, last);
                 break;
             case 2:
                 printf("call function delete, names = %s %s\n", first, last);
+                root = delete(root, first, last);
                 break;
             case 3:
                 printf("call function search, names = %s %s\n", first, last);
                 break;
             case 4:
                 printf("call function traverse\n");
+                traverse(root);
                 break;
         }
 
         free(first);
         free(last);
-
     }
-
     free(buffer);
-
 }
 
 int calculateLineCount(FILE *fp) {
