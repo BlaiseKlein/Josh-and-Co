@@ -13,8 +13,8 @@ typedef struct TreeNode {
 
 
 void errorMsg(FILE *output){
-    fprintf(output, "Error");
-    exit(1);
+	fprintf(output, "Error");
+	exit(1);
 }
 //free function for node.
 void freeNode(TreeNode *node) {
@@ -36,7 +36,7 @@ void traverse(TreeNode *root) {
     if (root != NULL) {
         traverse(root->left);
         for (int i = 0; i < root->count; i++) {
-            printf("%s %s\n", root->firstName, root->lastName);
+            printf("%s %s \n", root->firstName, root->lastName);
         }
         traverse(root->right);
     }
@@ -73,35 +73,40 @@ TreeNode *add(TreeNode *root, char *firstName, char *lastName) {
     return root;
 }
 
-TreeNode *findMax(TreeNode *root) {
-    if (root->right != NULL) {
-        findMax(root->right);
-    }
-    return root;
+void swapData(TreeNode *node1, TreeNode *node2) {
+    char *tempFirstName = node1->firstName;
+    char *tempLastName = node1->lastName;
+    int tempCount = node1->count;
+
+    node1->firstName = node2->firstName;
+    node1->lastName = node2->lastName;
+    node1->count = node2->count;
+
+    node2->firstName = tempFirstName;
+    node2->lastName = tempLastName;
+    node2->count = tempCount;
 }
 
-TreeNode* delete(TreeNode *root, char *firstName, char *lastName) {
 
+TreeNode* delete(TreeNode *root, char *firstName, char *lastName) {
     if (root == NULL) {
-        // Base case: Node not found, add a new node instead.
         return createNode(firstName, lastName);
     }
+
     if (strcmp(root->firstName, firstName) < 0) {
         root->right = delete(root->right, firstName, lastName);
     } else if (strcmp(root->firstName, firstName) > 0) {
         root->left = delete(root->left, firstName, lastName);
-    } else if (strcmp(root->firstName, firstName) == 0) {//first names are equal.
+    } else { // First names are equal
         if (strcmp(root->lastName, lastName) < 0) {
             root->right = delete(root->right, firstName, lastName);
         } else if (strcmp(root->lastName, lastName) > 0) {
             root->left = delete(root->left, firstName, lastName);
         } else {
-            //found node to delete.
-            if (root->count > 1) {//if node has duplicates, reduce number by one.
-                root->count -= 1;
-                return root;
+            // Node found
+            if (root->count > 1) {
+                root->count -= 1; // If node has duplicates, reduce count
             } else {
-                //distinct node needs to be deleted.
                 if (root->left == NULL) {
                     TreeNode *temp = root->right;
                     freeNode(root);
@@ -111,11 +116,12 @@ TreeNode* delete(TreeNode *root, char *firstName, char *lastName) {
                     freeNode(root);
                     return temp;
                 } else {
-                    //copy values of max node, then call delete for temp node.
-                    TreeNode *temp = findMax(root->left);
-                    root->firstName = temp->firstName;
-                    root->lastName = temp->lastName;
-                    root->count = temp->count;
+                    TreeNode *temp = root->left;
+                    while (temp->right != NULL) {
+                        temp = temp->right;
+                    }
+                    //swap data for Nodes
+                    swapData(root, temp);
                     root->left = delete(root->left, temp->firstName, temp->lastName);
                 }
             }
@@ -124,15 +130,17 @@ TreeNode* delete(TreeNode *root, char *firstName, char *lastName) {
     return root;
 }
 
+
+
 void callFunctions(FILE * fp, int *functions, int lineCount, FILE * output){ //for now we are not using output
-    char *buffer = NULL;
+	char *buffer = NULL;
     size_t len = 0;
     ssize_t read;
-    TreeNode *root = NULL;
+	TreeNode *root = NULL;
 
-    for (int i = 0; (i < lineCount); i++) {
-        read = getline(&buffer, &len, fp);
-        int currFunc = functions[i];
+	for (int i = 0; (i < lineCount); i++) {
+		read = getline(&buffer, &len, fp);
+		int currFunc = functions[i];
 
         char *first = NULL, *last = NULL;
         buffer[strcspn(buffer, "\r\n")] = 0; // remove newline characters
@@ -144,28 +152,25 @@ void callFunctions(FILE * fp, int *functions, int lineCount, FILE * output){ //f
                 last = strdup(token); // allocate memory for last name
             }
         }
-        switch(currFunc){
-            case 1:
-                printf("call function add, names = %s %s\n", first, last);
+		switch(currFunc){
+			case 1:
                 root = add(root, first, last);
-                break;
-            case 2:
-                printf("call function delete, names = %s %s\n", first, last);
+				break;
+			case 2:
                 root = delete(root, first, last);
-                break;
-            case 3:
-                printf("call function search, names = %s %s\n", first, last);
-                break;
-            case 4:
-                printf("call function traverse\n");
+				break;
+			case 3:
+				printf("call function search, names = %s %s\n", first, last);
+				break;
+			case 4:
                 traverse(root);
-                break;
-        }
+				break;
+		}
 
-        free(first);
-        free(last);
-    }
-    free(buffer);
+		free(first);
+		free(last);
+	}
+	free(buffer);
 }
 
 int calculateLineCount(FILE *fp) {
@@ -195,7 +200,7 @@ void extractFunctions(FILE *fp, int *functions, int lineCount) {
         if (lastSpace != NULL) {
             functions[i] = atoi(lastSpace + 1); // grab the value after the last space
         } else {
-            functions[i] = atoi(line); //if there are no spaces, the pointer returns null, and we grab the only thing in the line which should be the number.
+        	functions[i] = atoi(line); //if there are no spaces, the pointer returns null, and we grab the only thing in the line which should be the number.
         }
     }
 
@@ -222,11 +227,11 @@ int main(int argc, char * argv[]) {
         errorMsg(output);
     }
 
-    lineCount = calculateLineCount(fp); //checking the number of lines in the file.
+	lineCount = calculateLineCount(fp); //checking the number of lines in the file.
 
-    printf("lineCount = %d\n", lineCount);
+	printf("lineCount = %d\n", lineCount);
 
-    int *functions = malloc(lineCount * sizeof(int));
+	int *functions = malloc(lineCount * sizeof(int));
     if (functions == NULL) {
         perror("Memory allocation failed");
         exit(1);
