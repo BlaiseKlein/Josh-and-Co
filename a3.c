@@ -32,13 +32,13 @@ void freeTree(TreeNode *root) {
     freeNode(root);
 }
 
-void traverse(TreeNode *root) {
+void traverse(TreeNode *root, FILE* outFile) {
     if (root != NULL) {
-        traverse(root->left);
+        traverse(root->left, outFile);
         for (int i = 0; i < root->count; i++) {
-            printf("%s %s \n", root->firstName, root->lastName);
+            fprintf(outFile, "%s %s \n", root->firstName, root->lastName);
         }
-        traverse(root->right);
+        traverse(root->right, outFile);
     }
 }
 
@@ -85,6 +85,34 @@ void swapData(TreeNode *node1, TreeNode *node2) {
     node2->firstName = tempFirstName;
     node2->lastName = tempLastName;
     node2->count = tempCount;
+}
+
+int comparator(TreeNode * a, char* fTarget, char* lTarget){
+    if (strcmp(fTarget, a->firstName) == 0){
+        return strcmp(lTarget, a->lastName);
+    } else {
+        return strcmp(fTarget, a->firstName);
+    }
+}
+
+TreeNode *search(TreeNode* root, char* fTarget, char* lTarget){
+    if (root == NULL){
+        return NULL;
+    }
+    if (comparator(root, fTarget, lTarget) == 0){
+        return root;
+    } else if (comparator(root, fTarget, lTarget) < 0) {
+        TreeNode *lCheck = search(root->left, fTarget, lTarget);
+        if (lCheck != NULL) {
+            return lCheck;
+        }
+    } else if (comparator(root, fTarget, lTarget) > 0){
+        TreeNode *rCheck = search(root->right, fTarget, lTarget);
+        if (rCheck != NULL){
+            return rCheck;
+        }
+    }
+    return NULL;
 }
 
 
@@ -160,10 +188,15 @@ void callFunctions(FILE * fp, int *functions, int lineCount, FILE * output){ //f
                 root = delete(root, first, last);
 				break;
 			case 3:
-				printf("call function search, names = %s %s\n", first, last);
+//				printf("call function search, names = %s %s\n", first, last);
+                if (search(root, first, last) != NULL){
+                    fprintf(output, "Found\n");
+                } else {
+                    fprintf(output, "Not found\n");
+                }
 				break;
 			case 4:
-                traverse(root);
+                traverse(root, output);
 				break;
 		}
 
