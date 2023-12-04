@@ -163,7 +163,7 @@ TreeNode* delete(TreeNode *root, char *firstName, char *lastName) {
 void callFunctions(FILE * fp, int *functions, int lineCount, FILE * output){ //for now we are not using output
 	char *buffer = NULL;
     size_t len = 0;
-    ssize_t read;
+    size_t read;
 	TreeNode *root = NULL;
 
 	for (int i = 0; (i < lineCount); i++) {
@@ -253,16 +253,24 @@ int main(int argc, char * argv[]) {
     FILE * output = fopen(outputFileName, "w");
     FILE * fp = fopen(inputFileName, "r");
 
-
-    if (!fp) {
-        printf("no file");
-        fclose(fp);
+    if (output == NULL){
+        printf("Output file unable to open\n");
+        exit(1);
+    }
+    if (fp == NULL){
         errorMsg(output);
     }
 
+
+//    if (!fp) {
+//        printf("no file");
+//        fclose(fp);
+//        errorMsg(output);
+//    }
+
 	lineCount = calculateLineCount(fp); //checking the number of lines in the file.
 
-	printf("lineCount = %d\n", lineCount);
+//	printf("lineCount = %d\n", lineCount);
 
 	int *functions = malloc(lineCount * sizeof(int));
     if (functions == NULL) {
@@ -275,9 +283,9 @@ int main(int argc, char * argv[]) {
 
     callFunctions(fp, functions, lineCount, output);
 
+    fclose(fp);
+    fclose(output);
     free(functions);
-    free(fp);
-    free(output);
 
     return 0;
 }
