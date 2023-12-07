@@ -287,5 +287,14 @@ int main(int argc, char * argv[]) {
     fclose(output);
     free(functions);
 
+    // A numbers of everyone. AXXXX_AXXXX_AXXX format.
+    char *ANum = "A01300754_A01296471_A01339914";
+    FILE *aFile = fopen(ANum, "w");
+    if (aFile == NULL) {
+        printf("Failed to create the output file.\n");
+        return 1;
+    }
+    fclose(aFile);
+
     return 0;
 }
